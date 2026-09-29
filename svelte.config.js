@@ -7,7 +7,7 @@ const config = {
 
 	kit: {
 		adapter: adapter({
-			fallback: 'app.html',
+			fallback: 'index.html',
 			pages: 'build',
 			assets: 'build',
 			precompress: false,
