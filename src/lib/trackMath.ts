@@ -91,6 +91,40 @@ export function isInBounds(pos: MeterPoint, radiusM: number = PLAYER_RADIUS_M): 
 	return y >= RADIUS_INNER + r && y <= F_OUTER_BOTTOM(x) - r;
 }
 
+/** Pushes `p` radially so its distance from `c` lies within [min, max]. */
+function clampRadial(p: MeterPoint, c: MeterPoint, min: number, max: number): MeterPoint {
+	const dx = p.x - c.x;
+	const dy = p.y - c.y;
+	const d = Math.hypot(dx, dy) || 1e-9;
+	const target = Math.min(Math.max(d, min), max);
+	return { x: c.x + (dx / d) * target, y: c.y + (dy / d) * target };
+}
+
+/**
+ * Nearest-ish position that keeps the whole skater circle on the track surface
+ * (mirrors `isInBounds`). Iterates because a turn clamp can land in a straight.
+ */
+export function clampToTrack(pos: MeterPoint, radiusM: number = PLAYER_RADIUS_M): MeterPoint {
+	// Small margin so the result passes isInBounds' strict comparisons.
+	const r = radiusM + 0.01;
+	let p = pos;
+	for (let i = 0; i < 3; i++) {
+		if (isInBounds(p, radiusM)) return p;
+		if (p.x > C1.x) {
+			p = clampRadial(p, C1, RADIUS_INNER + r, Infinity);
+			p = clampRadial(p, C1_OUTER, 0, RADIUS_OUTER - r);
+		} else if (p.x < C2.x) {
+			p = clampRadial(p, C2, RADIUS_INNER + r, Infinity);
+			p = clampRadial(p, C2_OUTER, 0, RADIUS_OUTER - r);
+		} else if (p.y <= 0) {
+			p = { x: p.x, y: Math.min(Math.max(p.y, F_OUTER_TOP(p.x) + r), -RADIUS_INNER - r) };
+		} else {
+			p = { x: p.x, y: Math.max(Math.min(p.y, F_OUTER_BOTTOM(p.x) - r), RADIUS_INNER + r) };
+		}
+	}
+	return p;
+}
+
 // --------------------------------------------------------------------------- //
 // Pack detection (@open-roller-derby-tools/derby-track)
 // --------------------------------------------------------------------------- //

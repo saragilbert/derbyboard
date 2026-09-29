@@ -1,6 +1,8 @@
 import Konva from 'konva';
+import { get } from 'svelte/store';
 
 import { colors } from '$lib/constants';
+import { boardSettings } from '$lib/stores/boardSettings';
 import { KonvaPlayer } from './KonvaPlayer';
 
 export enum SkatingOfficialRole {
@@ -15,6 +17,7 @@ export enum SkatingOfficialRole {
 export class KonvaSkatingOfficial extends KonvaPlayer {
 	public readonly id: string;
 	role: SkatingOfficialRole;
+	private jamRefStar?: Konva.Star;
 
 	/**
 	 * Returns the base circle shape representing the player
@@ -42,6 +45,8 @@ export class KonvaSkatingOfficial extends KonvaPlayer {
 		if (role === SkatingOfficialRole.jamRefA || role === SkatingOfficialRole.jamRefB) {
 			this.setupJamRefStar();
 		}
+
+		this.group.visible(!get(boardSettings).hideOfficials);
 	}
 
 	/**
@@ -86,11 +91,21 @@ export class KonvaSkatingOfficial extends KonvaPlayer {
 			numPoints: 5,
 			innerRadius: this.circle.radius() * 0.35,
 			outerRadius: this.circle.radius() * 0.9,
-			fill: this.role === SkatingOfficialRole.jamRefA ? colors.teamAPrimary : colors.teamBPrimary,
+			fill: this.jamRefColor(),
 			stroke: colors.officialSecondary,
 			strokeWidth: 1.3,
 			listening: false
 		});
+		this.jamRefStar = star;
 		this.group.add(star);
+	}
+
+	private jamRefColor(): string {
+		return this.role === SkatingOfficialRole.jamRefA ? colors.teamAPrimary : colors.teamBPrimary;
+	}
+
+	/** Re-reads team colors onto the jam ref star. */
+	public applyColors(): void {
+		this.jamRefStar?.fill(this.jamRefColor());
 	}
 }

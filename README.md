@@ -1,5 +1,9 @@
 # Derbyboard
 
+## About this fork
+
+This is an unofficial fork of [Derbyboard](https://github.com/ruihildt/derbyboard), created by Rui Hildt. All credit for the original project and its work belongs to the original creator. I am using this fork as a playground for experimentation; it is not an official continuation of the original project.
+
 ## Record your roller derby tactics from your browser
 
 Derbyboard is an interactive web application that enables recording of roller derby strategies through your browser, with optional audio capture.

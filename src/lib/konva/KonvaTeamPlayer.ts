@@ -1,7 +1,9 @@
 import Konva from 'konva';
-import { colors } from '$lib/constants';
+import { get } from 'svelte/store';
+import { colors, PLAYER_STROKE_WIDTH, TRACK_SCALE } from '$lib/constants';
+import { leadJammer } from '$lib/stores/leadJammer';
 import { KonvaPlayer } from './KonvaPlayer';
-import { isInBounds, pxToMeter } from '$lib/trackMath';
+import { clampToTrack, isInBounds, pxToMeter } from '$lib/trackMath';
 
 export enum TeamPlayerRole {
 	jammer = 'jammer',
@@ -29,6 +31,8 @@ export class KonvaTeamPlayer extends KonvaPlayer {
 	public readonly id: string;
 	public starShape?: Konva.Star;
 	public pivotStripeGroup?: Konva.Group;
+	private pivotStripe?: Konva.Rect;
+	private leadRing?: Konva.Circle;
 	team: TeamPlayerTeam;
 	role: TeamPlayerRole;
 	zone: number;
@@ -74,6 +78,25 @@ export class KonvaTeamPlayer extends KonvaPlayer {
 
 		this.setupVisualElements();
 		this.updateInBounds();
+		this.setLead(get(leadJammer) === team);
+	}
+
+	/** Shows/hides the lead-jammer ring. No-op for non-jammers. */
+	public setLead(isLead: boolean): void {
+		if (this.role !== TeamPlayerRole.jammer) return;
+		if (!this.leadRing) {
+			this.leadRing = new Konva.Circle({
+				radius: this.circle.radius() + PLAYER_STROKE_WIDTH * 1.5,
+				stroke: colors.leadJammer,
+				strokeWidth: PLAYER_STROKE_WIDTH * 1.5,
+				shadowColor: colors.leadJammer,
+				shadowBlur: 12,
+				listening: false
+			});
+			this.group.add(this.leadRing);
+			this.leadRing.moveToBottom();
+		}
+		this.leadRing.visible(isLead);
 	}
 
 	/**
@@ -127,8 +150,18 @@ export class KonvaTeamPlayer extends KonvaPlayer {
 			listening: false
 		});
 
+		this.pivotStripe = stripe;
 		this.pivotStripeGroup.add(stripe);
 		this.group.add(this.pivotStripeGroup);
+	}
+
+	/** Re-reads team colors from `colors` onto the existing shapes. */
+	public applyColors(): void {
+		const isA = this.team === TeamPlayerTeam.A;
+		const secondary = isA ? colors.teamASecondary : colors.teamBSecondary;
+		this.circle.fill(isA ? colors.teamAPrimary : colors.teamBPrimary);
+		this.starShape?.fill(secondary);
+		this.pivotStripe?.fill(secondary);
 	}
 
 	/**
@@ -143,6 +176,16 @@ export class KonvaTeamPlayer extends KonvaPlayer {
 		const center = { x: stage.width() / 2, y: stage.height() / 2 };
 		this.isInBounds = isInBounds(pxToMeter(this.getPosition(), center));
 		this.circle.stroke(this.isInBounds ? colors.inBounds : colors.outOfBounds);
+	}
+
+	/** Moves the player back onto the track surface if any part of it is off. */
+	public clampToTrack(): void {
+		const stage = this.group.getStage();
+		if (!stage) return;
+
+		const center = { x: stage.width() / 2, y: stage.height() / 2 };
+		const m = clampToTrack(pxToMeter(this.getPosition(), center));
+		this.setPosition({ x: center.x + m.x * TRACK_SCALE, y: center.y + m.y * TRACK_SCALE });
 	}
 
 	/**
@@ -172,6 +215,8 @@ export class KonvaTeamPlayer extends KonvaPlayer {
 		// Clear references to shapes
 		this.starShape = undefined;
 		this.pivotStripeGroup = undefined;
+		this.pivotStripe = undefined;
+		this.leadRing = undefined;
 
 		// Call parent destroy to handle base cleanup
 		super.destroy();

@@ -2,6 +2,9 @@ import { get } from 'svelte/store';
 import Konva from 'konva';
 
 import { boardState } from '$lib/stores/konvaBoardState';
+import { boardSettings } from '$lib/stores/boardSettings';
+import { leadJammer } from '$lib/stores/leadJammer';
+import { colorName, contrastText } from '$lib/utils/colorName';
 import {
 	BASE_ZOOM,
 	CENTER_POINT_OFFSET,
@@ -11,11 +14,15 @@ import {
 	OUTER_VERTICAL_OFFSET_2,
 	VERTICAL_OFFSET_1,
 	VERTICAL_OFFSET_2,
-	ZOOM_INCREMENT
+	ZOOM_INCREMENT,
+	applyPalette,
+	colors,
+	type Palette
 } from '$lib/constants';
 
 import { KonvaTrackGeometry, type Point } from './KonvaTrackGeometry';
 import { KonvaPlayerManager } from './KonvaPlayerManager';
+import { KonvaTeamPlayer, TeamPlayerRole } from './KonvaTeamPlayer';
 import { KonvaPackManager } from './KonvaPackManager';
 import { KonvaRecorder } from './KonvaRecorder';
 import { KonvaGestureHandler } from './KonvaGestureHandler';
@@ -34,6 +41,9 @@ export class KonvaGame {
 	private trackLinesLayer: Konva.Layer;
 	private playersLayer: Konva.Layer;
 	private engagementZoneLayer: Konva.Layer;
+	private leadLayer: Konva.Layer;
+	private leadLabel: Konva.Label;
+	private unsubscribeLead: () => void;
 
 	private trackGeometry: KonvaTrackGeometry;
 	private playerManager!: KonvaPlayerManager;
@@ -83,6 +93,8 @@ export class KonvaGame {
 		// Apply persisted view settings
 		this.loadViewSettings();
 
+		applyPalette(get(boardSettings).palette);
+
 		// Create track geometry (depends on points)
 		this.trackGeometry = new KonvaTrackGeometry(this.initializePoints());
 
@@ -104,7 +116,33 @@ export class KonvaGame {
 		this.trackGeometry.addTrackLinesToLayer(this.trackLinesLayer);
 		this.stage.add(this.trackLinesLayer);
 
-		// 4. Players (top)
+		// 4. Lead jammer banner (infield, under players)
+		this.leadLayer = new Konva.Layer();
+		this.leadLabel = new Konva.Label({ visible: false, draggable: true });
+		this.leadLabel.on('dragend', () => {
+			const position = this.leadLabel.position();
+			boardSettings.update((s) => ({
+				...s,
+				leadPosition: { x: position.x / this.width, y: position.y / this.height }
+			}));
+		});
+		this.leadLabel.add(
+			new Konva.Tag({
+				cornerRadius: 8,
+				stroke: 'black',
+				strokeWidth: 2,
+				shadowColor: 'black',
+				shadowBlur: 8,
+				shadowOpacity: 0.3
+			})
+		);
+		this.leadLabel.add(
+			new Konva.Text({ fontSize: 22, fontStyle: 'bold', padding: 10, fontFamily: 'sans-serif' })
+		);
+		this.leadLayer.add(this.leadLabel);
+		this.stage.add(this.leadLayer);
+
+		// 5. Players (top)
 		this.stage.add(this.playersLayer);
 
 		this.playerManager = new KonvaPlayerManager(this.playersLayer);
@@ -127,6 +165,15 @@ export class KonvaGame {
 		this.playersLayer.on('collision', (e) => {
 			this.playerManager.handleCollision(e);
 		});
+
+		this.playersLayer.on('dbltap dblclick', (e) => {
+			if (this.replayMode) return;
+			const player = e.target.findAncestor('.playerGroup', true)?.getAttr('player');
+			if (!(player instanceof KonvaTeamPlayer) || player.role !== TeamPlayerRole.jammer) return;
+			leadJammer.update((lead) => (lead === player.team ? null : player.team));
+		});
+
+		this.unsubscribeLead = leadJammer.subscribe(() => this.renderLead());
 
 		this.playerManager.initialLoad();
 		this.packManager.determinePack();
@@ -157,11 +204,37 @@ export class KonvaGame {
 		window.removeEventListener('resize', this.handleResize);
 		window.visualViewport?.removeEventListener('resize', this.onVisualViewportResize);
 		this.gestureHandler.destroy();
+		this.unsubscribeLead();
 		this.trackSurfaceLayer.destroy();
 		this.trackLinesLayer.destroy();
 		this.engagementZoneLayer.destroy();
+		this.leadLayer.destroy();
 		this.playersLayer.destroy();
 		this.stage.destroy();
+	}
+
+	/** Syncs jammer lead rings and the infield "X team has lead" banner with the store. */
+	private renderLead() {
+		const lead = get(leadJammer);
+		this.playerManager.getTeamPlayers().forEach((p) => p.setLead(p.team === lead));
+
+		if (lead) {
+			const fill = lead === 'A' ? colors.teamAPrimary : colors.teamBPrimary;
+			const text = this.leadLabel.getText();
+			text.text(`${colorName(fill)} team has lead`);
+			text.fill(contrastText(fill));
+			this.leadLabel.getTag().fill(fill);
+			const saved = get(boardSettings).leadPosition;
+			this.leadLabel.position(
+				saved
+					? { x: saved.x * this.width, y: saved.y * this.height }
+					: { x: this.width / 2, y: this.height / 2 }
+			);
+			this.leadLabel.offset({ x: this.leadLabel.width() / 2, y: this.leadLabel.height() / 2 });
+		}
+		this.leadLabel.visible(!!lead);
+		this.leadLayer.batchDraw();
+		this.playersLayer.batchDraw();
 	}
 
 	private initializePoints(): Record<string, Point> {
@@ -322,6 +395,7 @@ export class KonvaGame {
 		this.trackLinesLayer.batchDraw();
 		this.engagementZoneLayer.batchDraw();
 		this.playersLayer.batchDraw();
+		this.renderLead();
 	}
 
 	// Increase zoom level within MAX_ZOOM limit
@@ -617,6 +691,23 @@ export class KonvaGame {
 		this.packManager.determinePack();
 	}
 
+	setOfficialsHidden(hidden: boolean) {
+		this.playerManager.getSkatingOfficials().forEach((o) => o.getNode().visible(!hidden));
+		this.playersLayer.batchDraw();
+	}
+
+	/** Recolors track, players and jam refs in place (e.g. after a palette change). */
+	applyColors(palette?: Partial<Palette>) {
+		applyPalette(palette);
+		this.trackGeometry.applyColors();
+		this.playerManager.getTeamPlayers().forEach((p) => p.applyColors());
+		this.playerManager.getSkatingOfficials().forEach((o) => o.applyColors());
+		this.trackSurfaceLayer.batchDraw();
+		this.trackLinesLayer.batchDraw();
+		this.playersLayer.batchDraw();
+		this.renderLead();
+	}
+
 	resetBoard() {
 		// Reset stage position and scale
 		this.stage.position({ x: 0, y: 0 });
@@ -626,6 +717,7 @@ export class KonvaGame {
 		this.recalculateDimensions();
 
 		// Reset persisted state first
+		leadJammer.set(null);
 		boardState.set({
 			version: 3,
 			createdAt: new Date().toISOString(),

@@ -5,6 +5,7 @@ import { KonvaSkatingOfficial, SkatingOfficialRole } from './KonvaSkatingOfficia
 import type { KonvaPlayer } from './KonvaPlayer';
 import { get } from 'svelte/store';
 import { boardState, type KonvaBoardState } from '$lib/stores/konvaBoardState';
+import { boardSettings } from '$lib/stores/boardSettings';
 import type { TeamPlayerPosition, SkatingOfficialPosition } from '$lib/stores/konvaBoardState';
 import { CollisionSystem } from './CollisionSystem';
 import defaultLineup from '$lib/data/start-flat.json';
@@ -28,9 +29,22 @@ export class KonvaPlayerManager {
 	handleDragMove(e: Konva.KonvaEventObject<unknown>): void {
 		const target = e.target as Konva.Node;
 		if (target.hasName('playerGroup')) {
+			const keepInBounds = get(boardSettings).keepInBounds;
+			const player = target.getAttr('player');
+			if (keepInBounds && player instanceof KonvaTeamPlayer) {
+				player.clampToTrack();
+			}
+
 			this.collisionSystem.resolveCollisions();
 
-			const player = target.getAttr('player');
+			// Collisions can shove neighbours off the track; pull them back.
+			if (keepInBounds) {
+				this.teamPlayers.forEach((p) => {
+					p.clampToTrack();
+					p.updateInBounds();
+				});
+			}
+
 			if (player instanceof KonvaTeamPlayer) {
 				player.updateInBounds();
 			}

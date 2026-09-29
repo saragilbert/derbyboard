@@ -11,7 +11,10 @@ export class CollisionSystem {
 	}
 
 	resolveCollisions() {
-		const players = this.layer.find('.playerGroup').map((node) => node.getAttr('player'));
+		const players = this.layer
+			.find('.playerGroup')
+			.filter((node) => node.visible())
+			.map((node) => node.getAttr('player'));
 		for (let i = 0; i < this.iterationCount; i++) {
 			this.resolveIteration(players);
 		}

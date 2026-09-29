@@ -2,6 +2,7 @@
 	import type { KonvaGame } from '$lib/konva/KonvaGame';
 	import { exportBoardToFile, loadBoardFromFile } from '$lib/utils/boardStateService';
 	import { isMobile } from '$lib/stores/viewport';
+	import { defaultScoreboard, scoreboard } from '$lib/stores/scoreboard';
 
 	import { Dropdown, DropdownItem, Modal, Button } from 'flowbite-svelte';
 	import {
@@ -12,7 +13,8 @@
 		ArrowDownToBracketOutline,
 		ArchiveOutline,
 		NewspaperOutline,
-		CogOutline
+		CogOutline,
+		ClockOutline
 	} from 'flowbite-svelte-icons';
 
 	let {
@@ -118,6 +120,23 @@
 	>
 		<CogOutline class="mr-2 h-4 w-4" />
 		<span>Board settings</span>
+	</DropdownItem>
+	<DropdownItem
+		class="flex items-center text-gray-700 hover:bg-primary-200"
+		onclick={() => scoreboard.update((s) => ({ ...s, visible: !s.visible }))}
+	>
+		<ClockOutline class="mr-2 h-4 w-4" />
+		<span>{$scoreboard.visible ? 'Hide' : 'Show'} scoreboard</span>
+	</DropdownItem>
+	<DropdownItem
+		class="flex items-center text-gray-700 hover:bg-primary-200"
+		onclick={() => {
+			scoreboard.set(defaultScoreboard());
+			dropdownOpen = false;
+		}}
+	>
+		<RefreshOutline class="mr-2 h-4 w-4" />
+		<span>Reset scoreboard</span>
 	</DropdownItem>
 	{#if $isMobile}
 		<DropdownItem

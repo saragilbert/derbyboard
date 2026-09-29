@@ -50,18 +50,38 @@ export interface Colors {
 	inPack: string;
 	inEngagementZone: string;
 	engagementZone: string;
+	leadJammer: string;
 	canvasBackground: string;
 	trackSurface: string;
 	trackBoundaries: string;
 	officialLane: string;
 	tenFeetLines: string;
 }
+/** User-customizable subset of `colors`. Hex values so they work with `<input type="color">`. */
+export type Palette = Pick<
+	Colors,
+	| 'teamAPrimary'
+	| 'teamASecondary'
+	| 'teamBPrimary'
+	| 'teamBSecondary'
+	| 'trackSurface'
+	| 'trackBoundaries'
+	| 'tenFeetLines'
+>;
+
+export const DEFAULT_PALETTE: Palette = {
+	teamAPrimary: '#ffff00',
+	teamASecondary: '#000000',
+	teamBPrimary: '#00bfff',
+	teamBSecondary: '#663399',
+	trackSurface: '#d3d3d3',
+	trackBoundaries: '#0000ff',
+	tenFeetLines: '#000000'
+};
+
 export const colors: Colors = {
 	playerDefault: 'black',
-	teamAPrimary: 'yellow',
-	teamASecondary: 'black',
-	teamBPrimary: 'deepskyblue',
-	teamBSecondary: 'rebeccapurple',
+	...DEFAULT_PALETTE,
 	officialPrimary: 'white',
 	officialSecondary: 'black',
 	outOfBounds: 'red',
@@ -69,12 +89,14 @@ export const colors: Colors = {
 	inEngagementZone: '#FFA500',
 	inPack: 'green',
 	engagementZone: '#b8deb8',
+	leadJammer: '#ff00ff',
 	canvasBackground: '#f0f0f0',
-	trackSurface: '#D3D3D3',
-	trackBoundaries: 'blue',
-	officialLane: 'black',
-	tenFeetLines: 'black'
+	officialLane: 'black'
 };
+
+export function applyPalette(palette: Partial<Palette> = {}): void {
+	Object.assign(colors, DEFAULT_PALETTE, palette);
+}
 
 // Zoom levels
 export const BASE_ZOOM = 1; // 100% zoom

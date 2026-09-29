@@ -11,11 +11,13 @@
 	import Menu from '$lib/components/Menu.svelte';
 	import ReplayBar from '$lib/components/ReplayBar.svelte';
 	import RotateHint from '$lib/components/RotateHint.svelte';
+	import Scoreboard from '$lib/components/Scoreboard.svelte';
 	import ZoneOverlay from '$lib/components/ZoneOverlay.svelte';
 	import WatermarkPreview from '$lib/components/WatermarkPreview.svelte';
 	import ZoomControl from '$lib/components/ZoomControl.svelte';
 	import { captureSettings } from '$lib/stores/captureSettings';
 	import { exportSettings } from '$lib/stores/exportSettings';
+	import { scoreboard } from '$lib/stores/scoreboard';
 	import { isMobile } from '$lib/stores/viewport';
 	import { formatRatio } from '$lib/utils/capture';
 	import type { TimelineFrame, TimelineProject } from '$lib/recording/timeline/types';
@@ -129,6 +131,16 @@
 		class="fixed right-[max(1rem,env(safe-area-inset-right))] top-[max(1rem,env(safe-area-inset-top))] z-[60]"
 	>
 		<Changelog bind:this={changelog} />
+	</div>
+{/if}
+
+{#if !isReplaying && $scoreboard.visible}
+	<!-- Sits below the News / mobile zoom row in the top-right corner. -->
+	<div
+		class="fixed z-30"
+		style={`right: ${($scoreboard.position?.right ?? 0.01) * 100}%; top: ${($scoreboard.position?.top ?? 0.12) * 100}%`}
+	>
+		<Scoreboard />
 	</div>
 {/if}
 

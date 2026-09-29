@@ -66,6 +66,9 @@ export class KonvaTrackGeometry {
 	private straight2Shape: Konva.Path;
 	private turn1Shape: Konva.Path;
 	private turn2Shape: Konva.Path;
+	private trackSurfaceShape: Konva.Path;
+	private boundaryLines: Konva.Path[];
+	private tenFeetLines: Konva.Path[];
 	zones: Zones;
 
 	constructor(points: Record<string, Point>) {
@@ -134,6 +137,7 @@ export class KonvaTrackGeometry {
 		// Create all surface that can be drawn
 		this.trackZoneGroup = new Konva.Group();
 		const trackSurface = this.createTrackSurfacePath();
+		this.trackSurfaceShape = trackSurface;
 		this.trackZoneGroup.add(trackSurface);
 
 		// Now create all track paths
@@ -154,7 +158,22 @@ export class KonvaTrackGeometry {
 		this.trackLinesGroup.add(turn2TenFeetLines);
 		this.trackLinesGroup.add(jammerLine);
 
+		this.boundaryLines = [boundaries, pivotLine, jammerLine];
+		this.tenFeetLines = [
+			straight1TenFeetLines,
+			straight2TenFeetLines,
+			turn1TenFeetLines,
+			turn2TenFeetLines
+		];
+
 		this.toggleDebugMode(false);
+	}
+
+	/** Re-reads track colors from `colors` onto the existing shapes. */
+	applyColors(): void {
+		this.trackSurfaceShape.fill(colors.trackSurface);
+		this.boundaryLines.forEach((line) => line.stroke(colors.trackBoundaries));
+		this.tenFeetLines.forEach((line) => line.stroke(colors.tenFeetLines));
 	}
 
 	addTrackSurfaceToLayer(layer: Konva.Layer) {
