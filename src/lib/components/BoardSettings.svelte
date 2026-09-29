@@ -69,6 +69,10 @@
 		boardSettings.update((s) => ({ ...s, keepInBounds: !s.keepInBounds }));
 	}
 
+	function toggleHideNews() {
+		boardSettings.update((s) => ({ ...s, hideNews: s.hideNews === false }));
+	}
+
 	function toggleHideOfficials() {
 		const hidden = !$boardSettings.hideOfficials;
 		boardSettings.update((s) => ({ ...s, hideOfficials: hidden }));
@@ -148,6 +152,16 @@
 				'Hide the striped skating officials.',
 				!!$boardSettings.hideOfficials,
 				toggleHideOfficials
+			)}
+		</div>
+
+		<h3 class="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-500">Interface</h3>
+		<div class="space-y-2">
+			{@render toggle(
+				'Hide news',
+				'Hide the News button.',
+				$boardSettings.hideNews !== false,
+				toggleHideNews
 			)}
 		</div>
 

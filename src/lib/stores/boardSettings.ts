@@ -14,7 +14,11 @@ export interface BoardSettings {
 	/** Clamp dragged team players to the track surface. */
 	keepInBounds?: boolean;
 	hideOfficials?: boolean;
+	/** News button/menu item. Hidden unless explicitly set to false. */
+	hideNews?: boolean;
 	leadPosition?: { x: number; y: number };
+	quickControlsVisible?: boolean;
+	quickControlsPosition?: { x: number; y: number };
 }
 
 export const boardSettings = persisted<BoardSettings>('derbyboard-board-settings', {
