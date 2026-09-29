@@ -70,13 +70,13 @@ export type Palette = Pick<
 >;
 
 export const DEFAULT_PALETTE: Palette = {
-	teamAPrimary: '#ffff00',
-	teamASecondary: '#000000',
-	teamBPrimary: '#00bfff',
-	teamBSecondary: '#663399',
-	trackSurface: '#d3d3d3',
-	trackBoundaries: '#0000ff',
-	tenFeetLines: '#000000'
+	teamAPrimary: '#5b84e0',
+	teamASecondary: '#ffffff',
+	teamBPrimary: '#e07777',
+	teamBSecondary: '#ffffff',
+	trackSurface: '#faf8f7',
+	trackBoundaries: '#000000',
+	tenFeetLines: '#808080'
 };
 
 export const colors: Colors = {
