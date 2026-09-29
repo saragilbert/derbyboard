@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { CloseOutline } from 'flowbite-svelte-icons';
+	import { CloseOutline, EyeOutline } from 'flowbite-svelte-icons';
 
 	import { KonvaGame } from '$lib/konva/KonvaGame';
 
@@ -9,6 +9,7 @@
 	import Changelog from '$lib/components/Changelog.svelte';
 	import FullscreenToggle from '$lib/components/FullscreenToggle.svelte';
 	import Menu from '$lib/components/Menu.svelte';
+	import QuickControls from '$lib/components/QuickControls.svelte';
 	import ReplayBar from '$lib/components/ReplayBar.svelte';
 	import RotateHint from '$lib/components/RotateHint.svelte';
 	import Scoreboard from '$lib/components/Scoreboard.svelte';
@@ -16,6 +17,7 @@
 	import WatermarkPreview from '$lib/components/WatermarkPreview.svelte';
 	import ZoomControl from '$lib/components/ZoomControl.svelte';
 	import { captureSettings } from '$lib/stores/captureSettings';
+	import { boardSettings } from '$lib/stores/boardSettings';
 	import { exportSettings } from '$lib/stores/exportSettings';
 	import { scoreboard } from '$lib/stores/scoreboard';
 	import { isMobile } from '$lib/stores/viewport';
@@ -145,6 +147,22 @@
 {/if}
 
 <BoardSettings bind:this={boardSettingsModal} {game} />
+
+{#if !isReplaying && !$isMobile}
+	{#if $boardSettings.quickControlsVisible !== false}
+		<QuickControls {game} onOpenSettings={() => boardSettingsModal?.open()} />
+	{:else}
+		<button
+			type="button"
+			class="fixed bottom-[calc(max(1rem,env(safe-area-inset-bottom))+3.5rem)] left-[max(1rem,env(safe-area-inset-left))] z-40 rounded-lg bg-white p-2 text-gray-600 shadow-lg shadow-black/10 hover:bg-primary-50"
+			title="Show controls"
+			aria-label="Show controls"
+			onclick={() => boardSettings.update((settings) => ({ ...settings, quickControlsVisible: true }))}
+		>
+			<EyeOutline class="h-4 w-4" />
+		</button>
+	{/if}
+{/if}
 
 {#if !isReplaying}
 	{#if !$isMobile}

@@ -114,13 +114,15 @@
 		<ArchiveOutline class="mr-2 h-4 w-4" />
 		<span>Open recording</span>
 	</DropdownItem>
-	<DropdownItem
-		class="flex items-center text-gray-700 hover:bg-primary-200"
-		onclick={handleOpenBoardSettings}
-	>
-		<CogOutline class="mr-2 h-4 w-4" />
-		<span>Board settings</span>
-	</DropdownItem>
+	{#if $isMobile}
+		<DropdownItem
+			class="flex items-center text-gray-700 hover:bg-primary-200"
+			onclick={handleOpenBoardSettings}
+		>
+			<CogOutline class="mr-2 h-4 w-4" />
+			<span>Board settings</span>
+		</DropdownItem>
+	{/if}
 	<DropdownItem
 		class="flex items-center text-gray-700 hover:bg-primary-200"
 		onclick={() => scoreboard.update((s) => ({ ...s, visible: !s.visible }))}

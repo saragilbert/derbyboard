@@ -15,6 +15,8 @@ export interface BoardSettings {
 	keepInBounds?: boolean;
 	hideOfficials?: boolean;
 	leadPosition?: { x: number; y: number };
+	quickControlsVisible?: boolean;
+	quickControlsPosition?: { x: number; y: number };
 }
 
 export const boardSettings = persisted<BoardSettings>('derbyboard-board-settings', {
