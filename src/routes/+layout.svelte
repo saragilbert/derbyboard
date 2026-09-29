@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import { PUBLIC_UMAMI_SCRIPT_URL, PUBLIC_UMAMI_WEBSITE_ID } from '$env/static/public';
+	import { env } from '$env/dynamic/public';
 	import '../app.css';
 
 	// Compose the Umami tag at runtime rather than pasting the whole tag into a
@@ -8,7 +8,7 @@
 	// JSON inside the inline bootstrap script, and a value containing a closing
 	// script tag would prematurely terminate that bootstrap script and break
 	// page load. Splitting into URL + website id keeps every env value safe.
-	const umamiEnabled = Boolean(PUBLIC_UMAMI_SCRIPT_URL && PUBLIC_UMAMI_WEBSITE_ID);
+	const umamiEnabled = Boolean(env.PUBLIC_UMAMI_SCRIPT_URL && env.PUBLIC_UMAMI_WEBSITE_ID);
 
 	onMount(() => {
 		if ('serviceWorker' in navigator) {
@@ -21,7 +21,7 @@
 
 <svelte:head>
 	{#if umamiEnabled}
-		<script defer src={PUBLIC_UMAMI_SCRIPT_URL} data-website-id={PUBLIC_UMAMI_WEBSITE_ID}></script>
+		<script defer src={env.PUBLIC_UMAMI_SCRIPT_URL} data-website-id={env.PUBLIC_UMAMI_WEBSITE_ID}></script>
 	{/if}
 </svelte:head>
 
