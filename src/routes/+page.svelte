@@ -128,7 +128,7 @@
 	</div>
 {/if}
 
-{#if !isReplaying}
+{#if !isReplaying && $boardSettings.hideNews === false}
 	<div
 		class="fixed right-[max(1rem,env(safe-area-inset-right))] top-[max(1rem,env(safe-area-inset-top))] z-[60]"
 	>

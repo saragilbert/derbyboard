@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { KonvaGame } from '$lib/konva/KonvaGame';
 	import { exportBoardToFile, loadBoardFromFile } from '$lib/utils/boardStateService';
+	import { boardSettings } from '$lib/stores/boardSettings';
 	import { isMobile } from '$lib/stores/viewport';
 	import { defaultScoreboard, scoreboard } from '$lib/stores/scoreboard';
 
@@ -140,7 +141,7 @@
 		<RefreshOutline class="mr-2 h-4 w-4" />
 		<span>Reset scoreboard</span>
 	</DropdownItem>
-	{#if $isMobile}
+	{#if $isMobile && $boardSettings.hideNews === false}
 		<DropdownItem
 			class="flex items-center text-gray-700 hover:bg-primary-200"
 			onclick={handleOpenNews}
